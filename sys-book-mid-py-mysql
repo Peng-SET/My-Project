@@ -1,0 +1,167 @@
+#-*- coding : UTF-8 -*-
+
+from tkinter import *
+from tkinter.messagebox import *
+import pymysql
+from tkinter import ttk
+ 
+root = Tk()
+root.geometry('700x400')
+root.title('图书管理系统')
+ 
+Label(root, text="书号：").place(relx=0, rely=0.12, relwidth=0.1)
+Label(root, text="书名：").place(relx=0.5, rely=0.12, relwidth=0.1)
+Label(root, text="作者：").place(relx=0, rely=0.19, relwidth=0.1)
+Label(root, text="价格：").place(relx=0.5, rely=0.19, relwidth=0.1)
+ 
+isbn = StringVar()
+title = StringVar()
+author = StringVar()
+price = StringVar()
+
+Entry(root, textvariable=isbn).place(relx=0.1, rely=0.12, relwidth=0.37, height=25)
+Entry(root, textvariable=title).place(relx=0.6, rely=0.12, relwidth=0.37, height=25) 
+Entry(root, textvariable=author).place(relx=0.1, rely=0.19, relwidth=0.37, height=25)
+Entry(root, textvariable=price).place(relx=0.6, rely=0.19, relwidth=0.37, height=25)
+ 
+Label(root, text='图书信息管理', bg='grey', fg='black', font=('宋体', 20)).pack(side=TOP, fill='x')
+ 
+#显示所有信息
+def showAllInfo():
+    x = dataTreeview.get_children()
+    for item in x:
+        dataTreeview.delete(item)
+    con = pymysql.connect("localhost","root","********","********")
+    cur = con.cursor()
+    cur.execute("select * from book")
+    lst = cur.fetchall()
+    for item in lst:
+        dataTreeview.insert("", 1, text="line1", values=item)
+    cur.close()
+    con.close()
+ 
+#添加信息
+def appendInfo():
+    if isbn.get() == "":
+        showerror(title='提示', message='输入不能为空')
+    elif title.get() == "":
+        showerror(title='提示', message='输入不能为空')
+    elif author.get() == "":
+        showerror(title='提示', message='输入不能为空')
+    elif price.get() == "":
+        showerror(title='提示', message='输入不能为空')
+    else:
+        num = isbn.get()
+        money=price.get()
+        if num.isnumeric() == False:
+           showerror(title='提示', message='书号格式有误')
+        elif money.isnumeric() == False:
+            showerror(title='提示', message='价格格式有误')
+        else:
+            x = dataTreeview.get_children()
+            for item in x:
+                dataTreeview.delete(item)
+            list1 = []
+            list1.append(isbn.get())
+            list1.append(title.get())
+            list1.append(author.get())
+            list1.append(price.get())
+            con = pymysql.connect("localhost","root","********","********")
+            cur = con.cursor()
+            cur.execute("insert into book values(%s,%s,%s,%s)", list1)
+            con.commit()#提交
+            cur.execute("select * from book")
+            lst = cur.fetchall()
+            for item in lst:
+                dataTreeview.insert("", 1, text="line1", values=item)
+            cur.close() #先关闭指针连接
+            con.close()#最后关闭数据库连接
+            showinfo(title='提示', message='添加成功！')
+ 
+#查询信息
+def queryInfo():
+    con = pymysql.connect("localhost","root","********","********")
+    cur = con.cursor()
+    cur.execute("select * from book")
+    bookList = cur.fetchall()
+    cur.close()
+    con.close()
+    print(bookList)
+    num = isbn.get()
+    flag = 0
+    if num.isnumeric() == False:
+        showerror(title='提示', message='书号格式有误')
+    for i in range(len(bookList)):
+        for item in bookList[i]:
+            if num == item:
+                flag = 1
+                con = pymysql.connect("localhost","root","********","********")
+                cur = con.cursor()
+                x = dataTreeview.get_children()
+                for items in x:
+                    dataTreeview.delete(items)
+                cur.execute("select * from book where isbn = %s",(num,))
+                lst = cur.fetchall()
+                for item in lst:
+                   dataTreeview.insert("", 1, text="line1", values=item)
+                cur.close()
+                con.close()
+                break
+    if flag==0:
+        showerror(title='提示', message='查找不到该图书！')
+         
+ 
+ 
+#删除信息
+def deleteInfo():
+    con = pymysql.connect("localhost","root","********","********")
+    cur = con.cursor()
+    cur.execute("select * from book")
+    bookList = cur.fetchall()
+    cur.close()
+    con.close()
+    print(bookList)
+     
+    num = isbn.get()
+    flag = 0
+    if num.isnumeric() == False:
+        showerror(title='提示', message='请输入正确的书号格式')
+    else:
+        for i in range(len(bookList)):
+            for item in bookList[i]:
+                if num == item:
+                    flag = 1
+                    con = pymysql.connect("localhost","root","********","********")
+                    cur = con.cursor()
+                    cur.execute("delete from book where isbn = %s", (num,))
+                    con.commit()
+                    cur.close()
+                    con.close()
+                    break
+        if flag == 1:
+            showinfo(title='提示', message='删除成功！')
+        else:
+            showerror(title='提示', message='删除失败')
+    showAllInfo()
+         
+ 
+ 
+ 
+Button(root, text="显示所有信息", activebackground="#808080",command=showAllInfo).place(relx=0.15, rely=0.27, width=100)
+Button(root, text="添加信息", activebackground="#808080",command=appendInfo).place(relx=0.35, rely=0.27, width=100)
+Button(root, text="查询信息",activebackground="#808080", command=queryInfo).place(relx=0.55, rely=0.27, width=100)
+Button(root, text="删除信息",activebackground="#808080", command=deleteInfo).place(relx=0.75, rely=0.27, width=100)
+ 
+ 
+dataTreeview = ttk.Treeview(root, show='headings', column=('isbn', 'title', 'author', 'price'))
+dataTreeview.column('isbn', width=150, anchor="center")
+dataTreeview.column('title', width=150, anchor="center")
+dataTreeview.column('author', width=150, anchor="center")
+dataTreeview.column('price', width=150, anchor="center")
+ 
+dataTreeview.heading('isbn', text='书号')
+dataTreeview.heading('title', text='书名')
+dataTreeview.heading('author', text='作者')
+dataTreeview.heading('price', text='价格')
+ 
+dataTreeview.place(relx=0.03,rely=0.37, relwidth=0.94)
