@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="UTF-8">
+  <title>点击按钮随机点名-样式布局参考</title>
+  <style type="text/css">  
+   #box {
+    margin: auto;
+    width: 660px;
+    font-size: 66px;
+    height: 94px;
+    color: #138eee;
+    text-align: center;
+    margin-top: 200px;
+   }   
+   #bt {
+    margin: auto;
+    width: 200px;
+    text-align: center;
+    margin-top: 75px;
+    color: #fff;
+    font-size: 25px;
+    cursor: pointer;
+   }
+  </style>
+   <script type="text/javascript">
+   var namelist=["张三","李四","王五","赵六","孙七"];
+ var mytime=null;
+ 
+ function doit(){
+ var bt=window.document.getElementById("bt");
+ if(mytime==null){
+  bt.innerHTML="停止";
+  show();
+ }
+ else{
+  bt.innerHTML="开始点名";
+  clearTimeout(mytime);
+  mytime=null;
+ }
+ }
+ 
+ function show(){
+ var box=window.document.getElementById("box");
+ var num=Math.floor((Math.random()*100000))%namelist.length;
+ box.innerHTML=namelist[num];
+ mytime=setTimeout("show()",1);
+ }
+   </script>
+ </head>
+ <body id="bodybj" style="background-color: black;">
+  <div id="box">亲，准备好点名了吗？</div>
+  <div id="bt" onclick="doit()">开始点名</div>
+ </body>
+</html>
